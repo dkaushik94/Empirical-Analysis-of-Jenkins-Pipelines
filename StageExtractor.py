@@ -4,7 +4,7 @@ from pprint import pprint
 class EntityState:
     waiting, start_entity_name, entity_name ,end_entity_name, start_entity_block, entity_block, end_entity_block = range(7)
 
-class EntityExtractor(object):
+class EntityExtractor:
 
     state = EntityState.waiting
     current_entity_name = None
@@ -67,7 +67,7 @@ class EntityExtractor(object):
             elif self.state == EntityState.end_entity_block:
                 self.state = EntityState.waiting
 
-        if not return_dict:
+        if not return_dict and self.entity_dict != {}:
             content = self.entity_dict[self.current_entity_name]
             del self.entity_dict[self.current_entity_name]
         else:
@@ -76,19 +76,4 @@ class EntityExtractor(object):
                 
 
 
-
-s = EntityExtractor()
-elems = s.get_elements('./sample.groovy')
-# content = s.get_all_entities(elems,'post','post',False)
-
-# pprint(content)
-meta_dict = s.get_all_entities(elems,'stage',None,True)
-pprint(meta_dict)
-# aa_dict = s.get_all_entities(elems,'always','always',True)
-# res = {'steps':meta_dict}
-# print(aa_dict)
-
-# succ_dict = s.get_all_entities(elems,'success',None,True)
-# print(succ_dict)
-# pprint(res)
 

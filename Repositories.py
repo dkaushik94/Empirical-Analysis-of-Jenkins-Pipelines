@@ -46,7 +46,7 @@ class Repositories:
 					os.rename(i,i.lower().strip())
 				os.rename('jenkinsfile','jenkinsfile_'+item)
 				jenkins_file = 'jenkinsfile_'+item
-				os.system('cp '+ jenkins_file + ' /Users/debojitkaushik/ATSE/sandeep_joshi__debojit_kaushik_course_project/Repos/')
+				os.system('cp '+ jenkins_file + ' /Users/debojitkaushik/ATSE/sandeep_joshi__debojit_kaushik_course_project/Repos/jenkins_dataset/')
 				os.chdir('..')
 				
 		except Exception:
@@ -62,7 +62,7 @@ class Repositories:
 					user, repo_name = item['repository']['owner']['login'], item['repository']['name']
 					clone_url = "https://www.github.com/%s/%s.git"%(user, repo_name)
 					os.system("git clone " + clone_url)
-			# self.collect_jenkins()
+			self.collect_jenkins()
 				
 		except Exception:
 			print(traceback.format_exc())
@@ -72,9 +72,7 @@ class Repositories:
 if __name__ == '__main__':
 	try:
 		r = Repositories()
-		# r.get_jenkins_repositories()
-		os.chdir("/Users/debojitkaushik/ATSE/sandeep_joshi__debojit_kaushik_course_project/Repos/")
-		r.collect_jenkins()
+		r.get_jenkins_repositories()
 		
 	except Exception:
 		print(traceback.format_exc())
