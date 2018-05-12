@@ -148,20 +148,22 @@ class Statistics:
     
     def build_word_cloud_low_level(self, path):
         try:
+            extract = EntityExtractor()
             os.chdir(path)
             files = os.listdir()
             consolidated_text = ''
             for item in files:
                 try:
-                    f = open(item).read()
-                    consolidated_text += f
+                    elems = list(shlex(open(item)))
+                    f = list(extract.get_all_entities(elems,'stage', None, True).values())
+                    temp = ' '.join([' '.join(item) for item in f])
+                    consolidated_text += temp
                 except Exception:
                     continue
-            # print(consolidated_text)
             consolidated_text = text_to_word_sequence(consolidated_text)
             consolidated_text = ' '.join(consolidated_text).replace("'", "").replace('"', '')
             consolidated_text = re.sub(r'[0-9.]+', '', consolidated_text)
-            # print(consolidated_text)
+            print(consolidated_text)
             self.create_word_cloud(
                 consolidated_text, 
                 "Common processes carried out in 'Stages'", 
