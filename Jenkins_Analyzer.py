@@ -50,9 +50,9 @@ def get_statistics():
         s.consolidate_post_block_statistics()
         s.get_post_block_correlation_statistics()
         s.get_parallel_block_statistics()
-        os.chdir('../')
+        
         with open('results.json','w',encoding='utf8') as f:
-            f.write(json.dumps(s.statistics_dict, ensure_ascii=False))    
+            f.write(json.dumps(s.statistics_dict, indent=4))
     except Exception:
         traceback.format_exc()
     
@@ -60,8 +60,6 @@ def get_statistics():
 if __name__ == '__main__':
     try:
         get_statistics()
-        
-        os.chdir('./sandeep_joshi__debojit_kaushik_course_project')
         do_clustering()
     except Exception:
         traceback.format_exc()
