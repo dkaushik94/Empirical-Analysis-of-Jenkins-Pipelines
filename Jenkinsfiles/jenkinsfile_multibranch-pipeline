@@ -1,0 +1,130 @@
+pipeline {
+  agent {
+	label 'apache'
+  }
+	environment {
+		VERSION = 10
+	}
+  stages {
+	    stage('Build') {
+	
+     		 steps {
+		      sh 'ant -f build.xml -v'
+    	 	 }
+ 	    }
+   
+	    stage('Deploy') {
+	
+        	 steps {
+		      sh "if [ ! -d '/var/www/html/reactangle/tested' ]; then mkdir /var/www/html/reactangle/tested; fi"
+                      sh "cp dist/rec-sample.jar /var/www/html/reactangle/tested/rec-sample.jar"
+                 }
+		
+	     when {
+	      branch 'dev'
+
+ 		     }
+
+	     }
+
+	     stage('Run') {
+	
+		agent {
+
+        		label 'apache'
+
+	     	}
+
+ 		steps {
+
+			sh "java -jar /var/www/html/reactangle/tested/rec-sample.jar 10 20"
+        
+		}
+	
+	 	when {
+
+         		 branch 'dev'
+
+         	}
+
+
+	     }
+
+	    stage("Promote Dev to master") {
+
+	    agent {
+
+        	label 'apache'
+          	}
+
+
+	 	steps {
+
+		sh 'git stash'
+        	echo "Checking Out Development Branch"
+        	sh 'git checkout dev'
+        	echo 'Checking Out Master Branch'
+        	sh 'git pull origin'
+        	sh 'git checkout master'
+		echo 'Additional Pull'
+                sh 'git pull'
+        	echo 'Merging Development into Master Branch'
+        	sh 'git merge dev --no-ff'
+        	echo 'Pushing to Origin Master'
+		sh 'git push origin master'
+
+        	}
+
+         	when {
+
+         	 branch 'dev'
+
+        	 }
+		
+	    }
+
+	    stage('Run Next') {
+
+                agent {
+
+                        label 'int'
+
+                }
+
+		when {
+                         branch 'master'
+
+                }
+
+
+
+                steps {
+
+			sh "wget http://cizer-pereira1.mylabserver.com/reactangle/tested/rec-sample.jar"
+			sh "if [ ! -d '/var/www/html/reactangle/final' ]; then mkdir /var/www/html/reactangle/final; fi"
+
+                        sh "cp rec-sample.jar /var/www/html/reactangle/final/rec-sample-${env.BRANCH_NAME}.jar"
+			
+                        sh "java -jar /var/www/html/reactangle/final/rec-sample-${env.BRANCH_NAME}-${env.VERSION}.jar 100 200"
+
+                }
+
+
+             }
+	
+}	
+   post {
+
+   always {
+	
+	archiveArtifacts artifacts: 'dist/*.jar', fingerprint: true
+	
+	}
+
+   }
+
+
+ }
+
+
+

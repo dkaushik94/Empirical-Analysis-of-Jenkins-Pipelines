@@ -1,0 +1,15 @@
+// Workaround for multibranch pipeline limitations
+//def script
+node('master') {
+	stage 'Checkout' 
+    checkout scm
+//    script = readFile env.JOB_NAME
+//            .replace('--', '|')
+//            .replaceAll(/(.*\/)?([^\/]*)\/[^\/]*$/, '$2')
+//            .replace('-', '/')
+//            .replace('|', '-')
+	stage 'Build'
+	sh 'docker build --no-cache -t ebala_py .'
+
+}
+//evaluate script

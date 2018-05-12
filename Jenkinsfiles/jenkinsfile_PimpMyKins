@@ -1,0 +1,15 @@
+pipeline {
+  agent any
+  stages {
+    stage('Test Sleep') {
+      steps {
+        sleep 5
+      }
+    }
+    stage('NUnitTest') {
+      steps {
+        nunit(debug: true, failIfNoResults: true, keepJUnitReports: true, skipJUnitArchiver: true, healthScaleFactor: 20, testResultsPattern: 'XX')
+      }
+    }
+  }
+}

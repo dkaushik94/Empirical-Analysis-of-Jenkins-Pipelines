@@ -1,0 +1,44 @@
+pipeline {
+    agent {
+        label "master"
+     }
+     tools {
+         maven "Maven 3.3.9"
+         jdk "Oracle JDK 8u40"
+     }
+    stages {
+        stage('Build and test') {
+            agent {
+                label 'master'
+            }
+            steps {
+                checkout scm
+                sh 'mvn -B clean package'
+                sh "docker build -t jacekmajchrzak/drobinkiapi ."
+            }
+        }
+        stage('Push') {
+            agent {
+                label 'master'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                }
+                sh 'docker push jacekmajchrzak/drobinkiapi'
+            }
+        }
+        stage('Deploy and run') {
+            agent {
+                label 'drobinki-dev'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'docker login -u $USERNAME -p $PASSWORD'
+                }
+                sh 'docker pull jacekmajchrzak/drobinkiapi'
+                sh 'docker run -d -p 8080:8080 jacekmajchrzak/drobinkiapi'
+            }
+        }
+    }
+}

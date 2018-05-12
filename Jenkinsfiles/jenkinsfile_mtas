@@ -1,0 +1,31 @@
+#!groovy
+
+node('slave01-docker') {
+    currentBuild.result = "SUCCESS"
+    try {
+       stage('Checkout') {
+            checkout scm
+       }
+       stage('Test') {
+            echo 'wat'
+       }
+       stage('Build Docker') {
+            sh 'echo "hi from here too"'
+       }
+       stage('Deploy') {
+            echo 'Push to Repo'
+            sh 'docker -v'
+            sh 'uname -a'
+            sh 'hostname'
+       }
+    }
+    catch (err) {
+        currentBuild.result = "FAILURE"
+            mail body: "project build error is here: ${env.BUILD_URL}" ,
+            from: 'admin@wuddup.xyz',
+            replyTo: 'no reply',
+            subject: 'MTHA build failed',
+            to: 'whuff739@gmail.com'
+        throw err
+    }
+}

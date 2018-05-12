@@ -1,0 +1,37 @@
+pipeline {
+  agent any
+  stages {
+    stage('ls') {
+      parallel {
+        stage('ls') {
+          steps {
+            sh 'ls -la'
+          }
+        }
+        stage('echo') {
+          steps {
+            echo '$env'
+          }
+        }
+      }
+    }
+    stage('finish') {
+      steps {
+        sleep 2
+      }
+    }
+    stage('create file') {
+      steps {
+        writeFile(file: 'env-name', text: '$env')
+      }
+    }
+    stage('check') {
+      steps {
+        fileExists 'env-name'
+      }
+    }
+  }
+  environment {
+    env = 'test'
+  }
+}

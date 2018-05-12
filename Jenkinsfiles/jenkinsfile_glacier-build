@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+
+    stages {
+        stage("Build") {
+            steps {
+                echo "Building ISO!"
+                sh "chmod +x build.sh"
+                sh "./build.sh"
+            }
+        }
+        stage("Archive") {
+            steps {
+                echo "Archiving!"
+                archiveArtifacts artifacts: '*.iso', fingerprint: true
+                sh "rm * -rf"
+            }
+        }
+    }
+}

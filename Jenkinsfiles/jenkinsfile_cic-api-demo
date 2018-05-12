@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+    stages {
+        stage('Preparation') {
+            steps {
+               echo ' Initializing pre-run steps ...'
+               git url: 'https://github.com/mdnidzgo/cic-api-demo'
+               script {
+                  }
+               }
+            }
+        stage('QA') {
+            steps {
+                echo "BUILDING QA ..."
+                echo "Running the API tests ..."
+                echo "git branch"
+                sh "#!/bin/bash \n source /home/jenkins/.profile && newman run jenkins/bluepages.postman_collection.json > pipeline.output && cat pipeline.output"
+//            sh "git config --global user.name \"Matt Nidzgorski\""
+//            sh "git config --global user.email \"<mdnidzgo@us.ibm.com>\""
+//            sh "git add pipeline.output"
+//            sh "git commit -m \"added by jenkins ${BUILD_NUMBER} pipeline.output\""
+ //           sh "git config --global push.default simple"
+ //           sh "git push "
+            }
+         }
+         stage('DEV') {
+            steps {
+                echo "BUILDING DEV ..."
+              }
+          }
+          stage('PROD') {
+            steps {
+                echo "BUILDING PROD ..."
+              }
+          }
+   }
+}

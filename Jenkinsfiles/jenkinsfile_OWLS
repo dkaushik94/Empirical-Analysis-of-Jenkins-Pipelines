@@ -1,0 +1,23 @@
+pipeline {
+  agent any
+  stages {
+    stage('Say Who Am I') {
+      steps {
+        sh 'ssh gelinski@notgelinskilinux &>/dev/null \'whoami\';'
+      }
+    }
+    stage('Start WebLogic Server Admin') {
+      steps {
+        sh 'ssh gelinski@notgelinskilinux &>/dev/null \'nohup /home/gelinski/WebLogic/wlsdom/domwlsgelinski/bin/startWebLogic.sh &>/dev/null &\''
+        sleep 30
+        sh 'ssh gelinski@notgelinskilinux &>/dev/null \'nohup /home/gelinski/WebLogic/wlsdom/domwlsgelinski/bin/startNodeManager.sh &>/dev/null &\''
+        sleep 30
+      }
+    }
+    stage('Open Console in Browser') {
+      steps {
+        sh 'firefox http://localhost:7001/console/login/LoginForm.jsp'
+      }
+    }
+  }
+}

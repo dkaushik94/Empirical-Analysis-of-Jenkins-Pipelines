@@ -1,0 +1,20 @@
+pipeline{
+  agent any
+
+  //compile stage 2
+  stages{
+    stage('Compile stage'){
+      steps{
+          sh 'mvn clean compile'
+      }
+    }
+    stage('Deploy stage'){
+      steps{
+          sh 'mvn install'
+      }
+    }
+  }
+}
+
+
+//git 'https://github.com/tomh333/HelloWorld.git'

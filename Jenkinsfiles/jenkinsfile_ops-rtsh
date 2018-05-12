@@ -1,0 +1,14 @@
+node('ecs'){
+  stage('build') {
+    git url: 'git@github.com:Smartling/ops-rtsh.git', credentialsId:'main'
+    sh "python2 setup.py sdist"
+  }
+  stage('publish') {
+    sshagent (credentials: ['repo-syncer']) {
+      def repo1 = sh(script: "rsync -e 'ssh -p543 -o StrictHostKeyChecking=no' dist/*.tar.gz repo-syncer@repo1.aws:/media/repo/custom/pypi/rtsh/", returnStatus: true)
+      if(repo1 != 0){
+        sh "rsync -e 'ssh -p543 -o StrictHostKeyChecking=no' dist/*.tar.gz repo-syncer@repo2.aws:/media/repo/custom/pypi/rtsh/"
+      }
+    }
+  }
+}

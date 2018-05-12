@@ -1,0 +1,66 @@
+pipeline  { 
+	agent any
+    stages {
+        stage('Prebuild Cleanup') {
+            steps {
+				echo "Begining Cleanup"
+				//sshagent(['93222d33-73f5-4fa8-ad2b-01b4aef298a9']) {
+				//	sh 'ssh -v accosJenkins@g4t8316g.houston.hpe.com sh /home/accosJenkins/clean-restart.ksh'					
+				//}
+				sshagent(['be4d4430-e0ec-45dc-b4da-2516d8e856f7']) {
+					sh 'ssh -v sinbad@g4t8316g.houston.hpe.com sh /home/sinbad/clean-restart.ksh'
+				}		    
+				echo "Completed  Cleanup"
+            }
+		}
+		stage('Code Review') {
+            steps {
+				echo "Begining SonarTest"
+                build 'sonartest'
+				echo "Completed SonarTest"
+            }
+        }
+        stage('Initiate ITG') {
+            steps {
+				echo "Begining accos-initial-itg"
+                build 'accos-initial-itg'
+				echo "Completed accos-initial-itg"
+            }
+        }
+        stage('Build ITG') {
+            steps {
+				echo "Begining accos-build-itg"
+                build 'accos-build-itg'
+				echo "Completed accos-build-itg"
+            }
+        }
+        stage('Deploy ITG') {
+            steps {
+				echo "Begining accos-deploy-itg"
+                build 'accos-deploy-itg'
+				echo "Completed accos-deploy-itg"
+            }
+        }
+        stage('Unit Test') {
+            steps {
+				echo "Begining unitTest"
+                build 'unitTest'
+				echo "Completed unitTest"
+            }
+        }
+        stage('Smoke Test') {
+            steps {
+				echo "Begining accos-smoke-itg"
+                build 'accos-smoke-itg'
+				echo "Completed accos-smoke-itg"
+            }
+        }
+        stage('Load Test') {
+            steps {
+				echo "Begining accos-load-itg"
+                build 'accos-load-itg'
+				echo "Completed accos-load-itg"
+            }
+        }
+	}
+}

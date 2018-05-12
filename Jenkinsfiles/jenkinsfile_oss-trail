@@ -1,0 +1,23 @@
+node {
+    stage('checkout') {
+        git 'https://github.com/AOSSCI/oss-trail'
+    }
+
+    
+
+    stage('install package') {
+        bat 'npm install'
+    }
+    
+
+
+    stage('link oss') {
+        bat 'start server.bat'
+    }
+
+
+
+    stage('unit test') {
+        bat 'mocha'
+    }
+}

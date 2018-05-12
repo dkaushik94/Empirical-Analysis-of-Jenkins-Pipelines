@@ -1,0 +1,62 @@
+String GIT_VERSION = "1.0"
+
+node {
+
+  stage ('Checkout') {
+    deleteDir()
+    checkout scm
+    // GIT_VERSION = sh (
+    //   script: 'git describe --tags',
+    //   returnStdout: true
+    // ).trim()
+  }
+
+  stage ('Build') {
+    echo 'Building....'
+    sh 'sbt clean compile'
+  }
+
+  stage('Test') {
+    echo 'Testing....'
+    sh 'sbt test || true'
+    //junit '**/target/test-reports/*.xml'
+  }
+
+  stage('Deploy to DEV (sandbox)') {
+    echo 'Deploying to DEV....'
+    //sh 'sbt install'
+    sh 'sbt bundle:dist'
+    sh 'conduct load cassandra'
+    sh 'ls -d bidding-impl/target/bundle/*.zip | xargs conduct load'
+    sh 'ls -d item-impl/target/bundle/*.zip | xargs conduct load'
+    sh 'ls -d search-impl/target/bundle/*.zip | xargs conduct load'
+    sh 'ls -d user-impl/target/bundle/*.zip | xargs conduct load'
+    sh 'ls -d web-gateway/target/bundle/*.zip | xargs conduct load'
+
+    echo 'Starting on DEV....'
+    sh 'conduct run cassandra'
+    sh 'conduct run biddingimpl'
+    sh 'conduct run itemimpl'
+    sh 'conduct run searchimpl'
+    sh 'conduct run userimpl'
+    sh 'conduct run webgateway'
+  }
+
+  stage('Deploy to PROD') {
+    echo 'Deploying to PROD....'
+    //sh 'sbt bundle:dist'
+    // sh 'ls -d bidding-impl/target/bundle/*.zip | xargs conduct load --host HOST -p PORT'
+    // sh 'ls -d item-impl/target/bundle/*.zip | xargs conduct load'
+    // sh 'ls -d search-impl/target/bundle/*.zip | xargs conduct load'
+    // sh 'ls -d user-impl/target/bundle/*.zip | xargs conduct load'
+    // sh 'ls -d web-gateway/target/bundle/*.zip | xargs conduct load'
+    //
+    // echo 'Starting on DEV....'
+    // sh 'conduct run biddingimpl'
+    // sh 'conduct run itemimpl'
+    // sh 'conduct run searchimpl'
+    // sh 'conduct run userimpl'
+    // sh 'conduct run webgateway'
+  }
+
+}

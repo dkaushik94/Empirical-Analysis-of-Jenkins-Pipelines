@@ -1,0 +1,31 @@
+node('maven') {
+
+def mvnCmd = "mvn -s configs/maven-settings.xml" //custom maven settings file
+
+  stage('Dev:Build') {
+    git url: "http://gitlab-ce-ci-cd.54.210.33.71.nip.io/arghya0190/portal-healthcare.git"
+    sh "mvn -DskipTests=true clean install"
+    stash name:"war", includes:"target/CustomerCRUD.war"
+  }
+  stage('Dev:Code Quality Analysis') {
+    git url: "http://gitlab-ce-ci-cd.54.210.33.71.nip.io/arghya0190/portal-healthcare.git"
+    sh "mvn site:site -DskipTests=true sonar:sonar -Dsonar.host.url=http://sonarqube-ci-cd.54.210.33.71.nip.io"
+  }
+  stage('Dev:Push to Artifactory') {
+    sh "${mvnCmd} -DskipTests=true deploy" 
+  }
+  stage ('Dev:Deploy') {
+               sh "rm -rf oc-build && mkdir -p oc-build/deployments"
+               sh "cp target/CustomerCRUD.war oc-build/deployments/healthcareportal.war"
+               // clean up. keep the image stream
+               sh "oc delete bc,dc,svc,route -l app=healthcareportal -n dev"
+               // create build. override the exit code since it complains about exising imagestream
+               sh "oc new-build --name=healthcareportal --image-stream=wildfly --binary=true --labels=app=healthcareportal -n dev || true"
+               // build image
+               sh "oc start-build healthcareportal --from-file="oc-build/deployments/healthcareportal.war" --wait=true -n dev"
+               // deploy image
+               sh "oc new-app healthcareportal:latest -n dev"
+               sh "oc expose svc/healthcareportal -n dev"
+             }
+
+  }

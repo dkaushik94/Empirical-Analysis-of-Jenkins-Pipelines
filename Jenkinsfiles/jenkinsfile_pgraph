@@ -1,0 +1,41 @@
+node {
+  checkout scm
+  stage('Build release') {
+    sh 'mkdir -p build_release'
+    dir ('build_release') {
+      sh 'conan install .. -s build_type=Release'
+      sh 'conan build ..'
+      deleteDir()
+    }
+  }
+  stage('Build debug') {
+    sh 'mkdir -p build_debug'
+    dir ('build_debug') {
+      sh 'conan install .. -s build_type=Debug'
+      sh 'conan build ..'
+      deleteDir()
+    }
+  }
+  stage('Build coverage') {
+    sh 'mkdir -p build_coverage'
+    dir ('build_coverage') {
+      sh 'conan install .. -s build_type=Debug --scope coverage=True'
+      sh 'conan build ..'
+      deleteDir()
+    }
+  }
+  stage('Build test_package') {
+    sh 'conan test_package'
+    dir ('test_package/build') {
+      deleteDir()
+    }
+  }
+  stage('Build sonar') {
+    sh 'mkdir -p build_sonar'
+    dir ('build_sonar') {
+      sh 'conan install .. -s build_type=Debug --scope sonar=True'
+      sh 'conan build ..'
+      deleteDir()
+    }
+  }
+}

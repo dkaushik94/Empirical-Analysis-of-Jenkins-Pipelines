@@ -1,0 +1,10 @@
+pipeline {
+  agent none
+  stages {
+    stage('1') {
+      steps {
+        git 'https://github.com/Mcuad/prueba.git'
+      }
+    }
+  }
+}

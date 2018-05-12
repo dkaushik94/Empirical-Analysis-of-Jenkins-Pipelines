@@ -1,0 +1,20 @@
+pipeline {
+  agent any
+  stages {
+    stage('Source Discovery') {
+      steps {
+        bat 'python C:\\Python27\\SMS_Jenkins\\Discovery.py'
+      }
+    }
+    stage('Source          Pre-Validation') {
+      steps {
+        bat 'python C:\\Python27\\SMS_Jenkins\\py-vminfo.py'
+      }
+    }
+    stage('Create        Replication') {
+      steps {
+        bat 'python C:\\Python27\\SMS_Jenkins\\CreateReplicationJob.py'
+      }
+    }
+  }
+}

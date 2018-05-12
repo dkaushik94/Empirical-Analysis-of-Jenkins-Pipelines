@@ -1,0 +1,120 @@
+#!groovy​
+
+properties([
+	buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '20')),
+	parameters([
+		file(name: 'STUDIO', description: 'Development studio installer (exe)'),
+		string(name: 'WINEPACKAGE', defaultValue: 'portable-winehq-devel-3.5-osx64', description: 'Wine package to build into the Studio release. See https://dl.winehq.org/wine-builds/macosx/pool/', trim: false), 
+		choice(name: 'WINEARCH', choices: ['win32', 'win64'].join("\n"), description: 'Wine architecture (32 or 64 bit; only 32 bit is believed to work)'), 
+		string(name: 'WINEDEBUG', defaultValue: 'err+all,fixme+all', description: 'Debug level for wine build', trim: true),
+		string(name: 'WINETRICKS', defaultValue: '-q autostart_winedbg=disable dotnet461 windowscodecs gdiplus win8 ddr=gdi', description: 'Winetricks verbs to apply to wine prefix', trim: true)
+	])
+])
+
+
+try {
+	node ('osx') {
+		stage('setup') {
+			checkout scm
+		}
+
+		def installerName = null
+		def installerPath = null
+
+		stage('dependencies') {
+			// tool: winetricks
+		    installerName = unstash('STUDIO')
+		    installerPath = "$env.WORKSPACE/$installerName"
+		    slackSend channel: '#outsystems-studio-mac', color: '#2ab5e8', message: "Build started for ${installerName} [${env.BUILD_URL}]"
+		}
+
+		stage('build') {
+			timeout(time:30, unit:'MINUTES') {
+				sh "./clean.sh"
+				echo "./build.sh ${installerPath}"
+			    def statusCode = sh returnStatus: true, script: "./build.sh ${installerPath}"
+			    echo "build.sh exited with status ${statusCode}"
+			    if (statusCode != 0) {
+			    	error "build.sh exited with status ${statusCode}"
+			    }
+			}
+		}
+
+		stage('package') {
+			timeout(time:30, unit:'MINUTES') {
+				sh './package.sh'
+			}
+		}
+
+		stage('release') {
+			archiveArtifacts artifacts: 'target/*.dmg', fingerprint: false
+			def userInput = null
+
+			timeout(time:12, unit:'HOURS') {
+				// TODO consider switching to a choice and don't fail build when not releasing
+				userInput = input message: 'Release to GitHub?', ok: 'Yes', parameters: [
+					string(name: 'TAG', defaultValue: '1.0', description: 'GitHub Tag', trim: true),
+					string(name: 'DESCRIPTION', defaultValue: '', description: 'Release description', trim: false),
+				]
+			}
+
+			timeout(time:30, unit:'MINUTES') {
+				withCredentials([string(credentialsId: 'github-token-text', variable: 'githubToken')]) {
+					withEnv(["GITHUB_TOKEN=${githubToken}"]) {
+						//TODO check for existence of tag and create first if needed
+	    				sh "./release.sh ${userInput.TAG} '${userInput.DESCRIPTION}'"
+					}
+				}
+			}
+
+			def githubReleaseUrl = "https://github.com/apemberton/outsystems-studio-mac/releases/tag/${userInput.TAG}"
+			slackSend channel: '#outsystems-studio-mac', color: 'good', message: "Succesfully built & released ${installerName} to GitHub [${githubReleaseUrl}]"
+		}
+	}
+} catch (e) {
+	currentBuild.result = "FAILED"
+	slackSend channel: '#outsystems-studio-mac', color: 'danger', message: "Build failed [${env.BUILD_URL}]"
+	throw e
+}
+
+
+
+// workaround for JENKINS-27413
+import hudson.FilePath
+import hudson.model.ParametersAction
+import hudson.model.FileParameterValue
+import hudson.model.Executor
+
+@NonCPS
+def unstash(String name, String fname = null) {
+    def paramsAction = currentBuild.rawBuild.getAction(ParametersAction.class);
+    if (paramsAction != null) {
+        for (param in paramsAction.getParameters()) {
+            if (param.getName().equals(name)) {
+                if (! param instanceof FileParameterValue) {
+                    error "unstashParam: not a file parameter: ${name}"
+                }
+                if (env['NODE_NAME'] == null) {
+                    error "unstashParam: no node in current context"
+                }
+                if (env['WORKSPACE'] == null) {
+                    error "unstashParam: no workspace in current context"
+                }
+                if (env['NODE_NAME'].equals("master")) {
+                  workspace = new FilePath(null, env['WORKSPACE'])
+                } else {
+                  def channel = Jenkins.getInstance().getComputer(env['NODE_NAME']).getChannel()
+                  workspace = new FilePath(channel, env['WORKSPACE'])
+                }
+
+                def filename = fname == null ? param.getOriginalFileName() : fname
+                def file = workspace.child(filename)
+                file.copyFrom(param.getFile())
+                return filename;
+            }
+        }
+    }
+    error "unstashParam: No file parameter named '${name}'"
+}
+
+

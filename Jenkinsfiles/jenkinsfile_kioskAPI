@@ -1,0 +1,37 @@
+pipeline {
+ agent any
+ stages {
+  stage('Clone repository') {
+   steps {
+    checkout scm
+   }
+  }
+  stage('Build') {
+   steps {
+    withCredentials(bindings: [usernamePassword(credentialsId: 'c0bb04b3-6f31-4af5-83fe-6afe0489415b', passwordVariable: 'DBPASSWORD', usernameVariable: 'DBUSERNAME')]) {
+     sh 'export B64_PASSWORD=$(printf ${DBPASSWORD} | base64) && export DB_PASSWORD=$B64_PASSWORD && export DB_HOST=$DBHOST && export DB_USERNAME=$DBUSERNAME && export DB_NAME=$DBNAME && export DB_USESSL=$DBUSESSL && DOCKER_HOST=unix:///var/run/docker.sock && cd kioskAPI && chmod +x mvnw && ./mvnw clean compile package'
+     sh 'export DB_PASSWORD= && export DB_HOST=$DBHOST && export DB_PORT=$DBPORT && export DB_USERNAME= && export DB_NAME=$DBNAME && export DB_USESSL=$DBUSESSL && DOCKER_HOST=unix:///var/run/docker.sock && cd kioskAPI && chmod +x mvnw && ./mvnw -DskipTests dockerfile:build'
+    }
+   }
+  }
+  stage('Publish to AWS ECR') {
+   steps {
+    sh "DOCKER_HOST=unix:///var/run/docker.sock && aws ecr get-login --no-include-email --region us-west-2 | awk '{print \$6}' | docker login -u AWS --password-stdin 288741890624.dkr.ecr.us-west-2.amazonaws.com/kioskapi"
+    sh "cd kioskAPI && DOCKER_HOST=unix:///var/run/docker.sock && docker tag qless/kioskconfig:latest 288741890624.dkr.ecr.us-west-2.amazonaws.com/kioskapi:1.0.${env.BUILD_ID} && docker tag qless/kioskconfig:latest 288741890624.dkr.ecr.us-west-2.amazonaws.com/kioskapi:latest"
+    sh 'DOCKER_HOST=unix:///var/run/docker.sock && docker push 288741890624.dkr.ecr.us-west-2.amazonaws.com/kioskapi'
+   }
+  }
+ }
+ environment {
+  DBHOST = '10.34.129.130'
+  DBPORT = '3306'
+  DBUSESSL = 'false'
+  DBNAME = 'test1_qless'
+  SECRETFILENAME = 'mon_shared_secret-1.0'
+ }
+ post {
+  always {
+   sh 'cd kioskAPI && chmod +x mvnw && ./mvnw clean'
+  }
+ }
+}

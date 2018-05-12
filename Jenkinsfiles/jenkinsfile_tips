@@ -1,0 +1,172 @@
+#!groovy
+
+@Library('pipeline-util') _
+
+//import groovy.time.DatumDependentDuration
+
+pipeline {
+    agent any
+    tools {
+        nodejs 'Node:6'
+    }
+    environment {
+
+
+        //commons
+        BRANCH_NAME = 'master' //Mock
+        HOUSE = '/opt/apps/jenkins/data/workspace/test2'
+        PYTHON_EXECUTABLE = '/usr/bin/python'
+        TOKEN = credentials('44539e16-0769-4b17-96d7-15fba89d3251')
+        SLACK_TOKEN = credentials('a1186d83-a408-4c86-a98f-9650dc985bc0')
+        SLACK_WEBHOOK_URL = credentials('014d7373-d899-4d5f-9dc3-7b26225c5aab')
+        SLACK_TEAM_DOMAIN = 'greencargo'
+        SLACK_CHANNEL = '#dev_tracking'
+        WEB_CONTAINER_HOST = '0.0.0.0'
+
+        //prod
+        PROD_NAME='tips'
+        PROD_DB_PORT = '5442'
+        PROD_POSTGRES = credentials('fd039298-0913-408b-9a36-046f18de6445')
+        PROD_WEB_HOST = 'tips.grassy.se'
+        PROD_WEB_CONTAINER_PORT = '2100'
+
+        //test
+        TEST_NAME='spit'
+        TEST_DB_PORT = '5443'
+        TEST_POSTGRES = credentials('fd039298-0913-408b-9a36-046f18de6445')
+        TEST_WEB_HOST = 'spit.grassy.se'
+        TEST_WEB_CONTAINER_PORT = '2101'
+
+    }
+
+    stages {
+
+        stage('Prepare env variables'){
+
+            steps{
+
+                prepareEnvVariables(env)
+
+            }
+        }
+
+        stage('Npm install') {
+
+            steps {
+
+                npmInstall()
+
+            }
+        }
+
+
+        stage('Run tests') {
+
+            steps {
+
+                npmTest('test') //If error this generate more debug msg
+
+            }
+        }
+
+
+        stage('Build'){
+
+            steps{
+
+                dockerBuild( name: env.NAME, tag : env.BUILD_ID, token:env.TOKEN)
+
+            }
+
+            post{
+
+                failure{
+
+                    dockerClearDanglingImages()
+
+                }
+            }
+        }
+
+        stage('Test deploy'){
+
+            when {
+
+                expression {env.BRANCH_NAME=='master' || env.BRANCH_NAME=='develop'}
+
+            }
+
+            steps {
+
+
+                backupPreviousDockerComposeFile(name:env.NAME)
+
+                createDockerComposeFile(
+                        tag: env.BUILD_ID,
+                        host_path: env.HOUSE,
+                        name: env.NAME,
+                        pg_user:env.POSTGRES_USR,
+                        pg_pass:env.POSTGRES_PSW,
+                        pg_port:env.DB_PORT,
+                        web_host:env.WEB_HOST,
+                        web_container_port:env.WEB_CONTAINER_PORT,
+                )
+
+                createDotenvFile(
+                        name:env.NAME,
+                        pg_user:env.POSTGRES_USR,
+                        pg_pass:env.POSTGRES_PSW,
+                        pg_port:env.DB_PORT,
+                        web_container_host:env.WEB_CONTAINER_HOST,
+                        web_container_port: env.WEB_CONTAINER_PORT,
+                        python_executable: env.PYTHON_EXECUTABLE
+                )
+
+                sh "more docker-compose-${env.NAME}.yml && more .env-${env.NAME}"
+
+                //sh "docker-compose -f docker-compose-${options.name}.yml -p ${options.name} up -ddd"
+
+                dockerDeploy( name: env.NAME )
+
+
+            }
+
+            post{
+
+                success{
+
+                    removePreviousImages(name:env.NAME, tag:env.BUILD_ID)
+                }
+
+                failure{
+
+                    sh 'echo removeCurrentImage'
+                    removeCurrentImage(name:env.NAME, tag:env.BUILD_ID)
+
+                    sh "echo retrieveDockerComposeBackup ${env.NAME}"
+
+                    retrieveDockerComposeBackup( name:env.NAME )
+
+                    sh 'echo dockerDeploy'
+                    dockerDeploy( name:env.NAME )
+
+                }
+            }
+        }
+
+    }
+    post {
+
+        success{
+
+            notifySlack('succeeded')
+
+        }
+
+        failure{
+
+            notifySlack('failed')
+
+        }
+    }
+}

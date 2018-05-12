@@ -1,0 +1,26 @@
+#!/usr/bin/env groovy
+properties([[$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/ORGDEMOPROJECT/jenkins-task1/'],
+            pipelineTriggers([upstream(threshold: 'UNSTABLE', upstreamProjects: 'jenkins-task7-2 ')])])
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh "echo paddu is ${params.param1}"
+                dir ('foo') {
+                 writeFile file:'dummy', text:''
+                 }
+                }
+               }
+                stage('Test') {
+                 steps {
+                  sh 'ls -l'
+                  }
+                 }
+                 stage('Deploy') {
+                  steps {
+                       echo "pad1"
+                       }
+                      }
+                     }
+                    }

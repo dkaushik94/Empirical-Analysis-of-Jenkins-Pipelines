@@ -1,0 +1,31 @@
+pipeline {
+
+    agent any
+
+    environment {
+        APP_NAME = 'DDD'
+    }
+
+    stages {
+
+        stage("Checkout") {
+            steps {
+
+                checkout scm
+            }
+        }
+
+        stage("Environment") {
+            steps {
+
+                sh 'sudo docker pull h3170n/alpine-hello-world'
+            }
+        }
+
+        stage("Build") {
+            steps {
+                sh 'sudo docker run h3170n/alpine-hello-world'
+            }
+        }
+    }
+}

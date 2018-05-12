@@ -1,0 +1,16 @@
+pipeline{
+agent any
+stages{
+stage("build"){
+   parallel d: {
+                     bat "ant main"
+                     }, b:{
+                     echo 'Building. jar'
+                     bat "ant jar"
+                     },e:{
+			bat "ant targetlesstotestmailing"	  
+                     echo 'Building..clean'
+				   bat "ant clean"
+}
+}
+}

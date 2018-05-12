@@ -1,0 +1,47 @@
+#!/usr/bin/env groovy
+
+node {
+
+    stage('Notify Build') {
+        echo "Build is Started by him ! "
+    }
+     
+    stage('Checkout Project') {
+        checkout scm
+    }
+
+    stage('Build Project') {
+        echo "Build is done !"
+    }
+
+    stage('Unit Test') {
+        echo "Unit Test is ok !"
+    }
+	
+	stage('Code Analyzes with Sonarqube') {
+        echo " Coverage calculating"
+    }
+	
+	stage('Check Coverage Result') {
+        echo "Coverage result > %90 "
+    }
+	
+	stage('Send yml Files to Kubernetes (Development or Stage Environment) with Ansible') {
+        echo "Files sent! "
+    }
+	
+	stage('Selenium Tests') {
+        echo "Selenium Test is ok ! "
+    }
+	
+	stage('Send yml Files to Kubernetes (Production Environment) with Ansible') {
+        echo "Selenium Test is ok ! "
+    }
+	
+	stage('Notify Everyone with Slack') {
+        echo " Slack Notification is ok !"
+    }
+
+
+
+}

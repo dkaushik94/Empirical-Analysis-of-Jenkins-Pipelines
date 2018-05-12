@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage ('compile stage') {
+            steps {
+            
+            echo "compiling task running and binary creating..."
+                  
+            }
+        }
+      
+    
+    stage ('testing stage') {
+        steps {
+        echo "testing task, UNit/functional testing running ..."
+        
+        }
+       }
+    stage ('package stage') {
+        steps {
+        echo "packaging binary file..."
+        }
+      }
+    }   
+ }
+ 

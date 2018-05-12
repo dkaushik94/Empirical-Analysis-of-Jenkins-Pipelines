@@ -1,0 +1,33 @@
+node {
+    stage ('IMPORT') {
+        git url:'https://github.com/1803-mar12-net/jaime-code.git', branch:'master', credentialId: 'github-token'
+    }
+
+    stage ('BUILD') {
+        dir ('/AdventureWorks/'){
+            bat 'dotnet build'
+        }
+    }
+
+    stage ('ANALYZE') {
+        dir ('AdventureWorks/'){
+            bat 'dotnet c:\\tools\\sonarqube\\sonarscanner.msbuild.dll begin /k:dd-key-jaime '
+            bat 'dotnet build'
+            bat 'dotnet c:\\tools\\sonarqube\\sonarscanner.msbuild.dll end'
+        }
+    }
+
+    stage ('TEST') {
+        dir('PizzaStoreLocalDB/PizzaStore.Tests'){
+            bat 'dotnet test'
+        }
+    }
+
+
+    state ('PACKAGE') {
+        dir('Palindrome/Palindrome.Client/'){
+            bat 'dotnet publish --output Publish'
+        }
+    }
+
+}

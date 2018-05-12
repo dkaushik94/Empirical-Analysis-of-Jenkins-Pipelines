@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Build') {
+            steps {
+            	script{
+                def server = Artifactory.server SERVER_ID
+			    def downloadSpec = """{
+				 "files": [
+				  {
+				      "pattern": "*.zip",
+				      "target": "releases_generic_ingAppMailroom2/0.0.1"
+				    }
+				 ]
+				}"""
+				server.download(downloadSpec)
+				echo 'Artifact downloaded successfully..'
+				 }
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying....'
+            }
+        }
+    }
+}

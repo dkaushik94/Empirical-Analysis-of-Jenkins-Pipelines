@@ -1,0 +1,48 @@
+pipeline {
+    agent {
+      docker { image 'node:7-alpine' }
+    }
+
+    environment {
+      FOO = 'bar'
+      BAR = 'foo'
+    }
+    stages {
+        stage('Deploy') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                  retry(5) {
+                    sh 'echo Retry and Timeout'
+                  }
+                }
+            }
+        }
+        stage('Test') {
+          steps {
+            sh 'node --version'
+          }
+        }
+        stage('Env') {
+          steps {
+            sh 'printenv'
+          }
+        }
+    }
+    post {
+      always {
+        sh 'echo Always run'
+      }
+      success {
+        sh 'echo Run on success'
+      }
+      failure {
+        sh 'echo Run on fail'
+      }
+      unstable {
+        sh 'echo Run when unstable'
+      }
+      changed {
+        sh 'echo Run on change'
+      }
+    }
+}

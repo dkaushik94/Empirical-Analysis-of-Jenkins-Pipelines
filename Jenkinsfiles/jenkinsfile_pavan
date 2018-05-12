@@ -1,0 +1,23 @@
+#!/usr/bin/env groovy	
+
+BranchName = env.BRANCH_NAME
+
+properties([
+    [$class: 'ParametersDefinitionProperty', parameterDefinitions: [
+    	[$class: 'StringParameterDefinition', defaultValue: '', description: 'triggerBy', name : 'triggerBy'],
+    	[$class: 'StringParameterDefinition', defaultValue: 'false', description: 'verbose logging [true|false]', name : 'verbose']
+    ]],
+    [$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10']]
+])
+node('murali') {
+	timestamps {
+    	def CONFIG = 'Debug'
+
+    	try {
+            stage('Checkout') {
+                checkout([$class: 'GitSCM', branches: [[name: '*/'+BranchName]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'WipeWorkspace'], [$class: 'PruneStaleBranch'], [$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '0bab540d-33ab-4431-99df-a0c487c69ef1', url: 'git@github.com:amkrishna434/pavan.git']]])
+                step([$class: 'StashNotifier'])
+            }
+	}
+    }
+}

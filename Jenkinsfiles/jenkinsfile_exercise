@@ -1,0 +1,55 @@
+
+pipeline {
+    agent any
+    parameters {
+        string(name: 'tomcat_stag', defaultValue: '159.89.89.104', description: 'Stagning Server')
+        string(name: 'tomcat_prod', defaultValue: '159.89.89.105', description: 'Production Server')
+    }
+    triggers {
+        pollSCM('59 23 * * 0')
+    }
+    stages{ 
+        stage('Code Checkout') {
+           steps {
+	       checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/poudelpra/exercise.git']]])
+
+           } 
+         }
+    stage ('Test') {
+        steps {
+            sh 'mvn test'
+        }
+	post {
+  	always {
+    	junit 'target/surefire-reports/*.xml'
+  	}
+}
+     }
+    stage ('Build') {
+        steps {
+            sh 'mvn clean deploy'
+        }
+        post {
+            success {
+                echo "Now Archeving . . . . . . . . "
+                archiveArtifacts artifacts: '**/target/*.?ar'
+            }
+        }
+    }  
+    stage('Deployments'){
+        parallel{
+            stage ('Deploy to Stagning'){
+                steps{
+			sh 'scp -rp $WORKSPACE/target/*.?ar root@${params.tomcat_stag}:/var/lib/tomcat/webapps'
+                }
+            }   
+            stage ('Deploy to Production') {
+                steps{
+                    sh 'scp -rp $WORKSPACE/target/*.?ar root@${params.tomcat_prod}:/var/lib/tomcat/webapps'
+                }
+            }
+            }
+        }
+
+    }
+}

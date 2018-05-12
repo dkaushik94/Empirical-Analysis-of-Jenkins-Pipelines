@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Dir1') {
+            steps {
+                sh 'echo List all the file,s in /home/ubuntu'
+                sh 'cd /home/ubuntu'
+                sh 'tree /home/ubuntu'
+                sh 'pwd'
+                sh 'ls -ltr /home/ubuntu/'
+            }
+        }
+        stage('Dir2') {
+            steps {
+                sh 'echo List all the file,s in /home/ubuntu/ansible'
+                sh 'pwd'
+                sh 'ls -ltr /home/ubuntu/ansible/'
+            }
+        }
+        stage('Dir3') { 
+            steps {
+                sh 'echo List all the file,s in /home/ubuntu/ansible/groups_vars/test'
+                sh 'pwd'
+                sh 'ls -ltr /home/ubuntu/ansible/group_vars/test/'
+                sh 'date'
+            }
+        }
+   }
+}

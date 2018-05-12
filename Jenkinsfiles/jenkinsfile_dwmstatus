@@ -1,0 +1,12 @@
+#!/usr/bin/env groov
+
+node('master') {
+       stage('Checkout'){
+          deleteDir()
+          checkout scm
+       }
+
+       stage('Build'){
+         sh 'make'
+       }
+}

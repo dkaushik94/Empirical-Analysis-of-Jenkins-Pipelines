@@ -1,0 +1,31 @@
+pipeline {
+    
+    agent any
+    
+    stages {
+        stage('Test') {
+            steps {
+                sh 'echo Testing!!!!'
+            }
+        }
+        
+        
+        stage('Deploy to FTP') {
+            
+            agent {
+                docker {
+                    image 'nezarfadle/tools'
+                    reuseNode true
+                    args "-u 0:0"
+                }
+            }
+            
+            steps {
+        
+                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'FTP_ACCOUNT', passwordVariable: 'FTP_PASSWORD', usernameVariable: 'FTP_USERNAME']]) {
+                    sh "git-ftp push -u ${env.FTP_USERNAME} -p ${env.FTP_PASSWORD} ftp://172.17.0.3"
+                }
+            }
+        }
+    }
+}

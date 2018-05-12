@@ -1,0 +1,66 @@
+pipeline {
+  agent any
+  stages {
+    stage('Environment setting') {
+      steps {
+        fileExists "pom.xml"
+		echo "Settings file: ${SETTINGS_FILE}"
+		echo "Production server: ${PRODUCTION_SERVER}"
+		fileExists "{$SETTINGS_FILE}"
+      }
+    }
+    stage('Build') {
+      steps {
+        sh 'mvn clean compile -DskipTests'
+      }
+    }
+    stage('Unit tests') {
+      steps {
+        sh 'mvn surefire:test'
+      }
+    }
+    stage('Integration tests') {
+      steps {
+        sh 'mvn install'
+      }
+    }
+	stage('Deploy') {
+      steps {
+		sh 'mvn jar:jar deploy:deploy -s ${SETTINGS_FILE}'
+      }
+    }
+	stage('Debian packaging') {
+      steps {
+		sh 'bash debian/debianbuild.sh 1.0.${BUILD_NUMBER}'
+      }
+    }
+	stage('Run on production') {
+      steps {
+		sshagent(credentials:['PRODUCTION_SSH']) {
+			sh 'ssh -l ${PRODUCTION_SERVER_USER} ${PRODUCTION_SERVER} sudo add-apt-repository \\"${DEBIAN_REPO_URL} xenial main\\"'
+			sh 'ssh -l ${PRODUCTION_SERVER_USER} ${PRODUCTION_SERVER} sudo apt-get update'
+			sh 'ssh -l ${PRODUCTION_SERVER_USER} ${PRODUCTION_SERVER} sudo apt-get install cabinet -y --allow-unauthenticated'
+			sh 'ssh -l ${PRODUCTION_SERVER_USER} ${PRODUCTION_SERVER} sudo systemctl daemon-reload'
+			sh 'ssh -l ${PRODUCTION_SERVER_USER} ${PRODUCTION_SERVER} sudo service cabinet restart'
+		}
+      }
+    }
+  }
+  post {
+        always {
+			sh 'mvn clean'
+			cleanWs()
+        }
+	}
+  tools {
+    maven 'Maven 3.5.0'
+    jdk 'jdk9'
+  }
+  environment{
+		DEBIAN_REPO_URL="YOUR_REPO_URL"
+		SETTINGS_FILE="$JENKINS_HOME/env/settings.xml"
+		PRODUCTION_SERVER_USER=credentials('PRODUCTION_SERVER')
+		PRODUCTION_SERVER=credentials('PRODUCTION_SERVER')
+
+  }
+}

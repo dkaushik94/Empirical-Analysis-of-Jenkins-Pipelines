@@ -1,0 +1,27 @@
+/*
+node {
+    stage('git'){
+        git(
+           url: 'https://gitlab.com/fabricioveronez/crm-confeiteira.git',
+           credentialsId: 'b875b4ab-5b69-42f0-b8ca-5c9031935ecd',
+           branch: 'master'
+        )
+    }
+    stage('build'){
+        parallel(
+            'build-angular': {
+                sh 'sudo docker-compose -f ./client/crm-confeitaria/docker-compose.ci.build.yml up'
+                sh 'sudo docker-compose -f ./client/crm-confeitaria/docker-compose.ci.build.yml down --remove-orphans'
+            },
+            'build-core': {
+                sh 'sudo docker-compose -f ./server/docker-compose.ci.build.yml up'
+                sh 'sudo docker-compose -f ./server/docker-compose.ci.build.yml down --remove-orphans'
+            }
+        )
+    }
+    stage('deploy'){
+        sh 'sudo docker-compose -f ./client/crm-confeitaria/docker-compose.yml down --remove-orphans'
+        sh 'sudo docker-compose -f ./client/crm-confeitaria/docker-compose.yml up -d --build'
+    }
+}
+*/

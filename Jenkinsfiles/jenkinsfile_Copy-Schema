@@ -1,0 +1,160 @@
+#!/usr/bin/env groovy
+node('Orca') {
+  currentBuild.result = "SUCCESS"
+  try {
+    wrap([$class: 'BuildUser']) {
+      ansiColor('xterm') {
+        def nodeHome = tool name: 'node-6.11.4'
+        def sonarHome = tool name: 'sonar-scanner'
+        env.PATH = "${nodeHome}/bin:${sonarHome}/bin:${env.PATH}"
+
+        stage('check tools') {
+          echo "PATH=${env.PATH}"
+          echo "ENV=${params.ENV}"
+          echo "SERVER=${params.SERVER}"
+          echo "=================================================================================================="
+          sh '''
+          node -v
+          npm -v
+          sonar-scanner -v
+          '''
+          echo "=================================================================================================="
+        }
+
+        stage('checkout') {
+          script {
+            if ("${params.ENV}"=='PROD') {
+              checkout([
+                $class: 'GitSCM',
+                branches: [[name: '*/master']],
+                browser: [$class: 'GogsGit', repoUrl: 'http://imexscm/git/Copy-Schema.git'],
+                extensions: scm.extensions + [[$class: 'CleanCheckout']],
+                userRemoteConfigs: scm.userRemoteConfigs
+              ])
+            } else {
+              checkout([
+                $class: 'GitSCM',
+                branches: [[name: '*/release/qa']],
+                browser: [$class: 'GogsGit', repoUrl: 'http://imexscm/git/Copy-Schema.git'],
+                extensions: scm.extensions + [[$class: 'CleanCheckout']],
+                userRemoteConfigs: scm.userRemoteConfigs
+              ])
+            }
+          }
+
+          stash excludes: 'dist/**/*, node_modules/**/*', name: 'source'
+        }
+
+        stage('npm install') {
+          unstash 'source'
+          sh "npm install"
+          stash includes: 'node_modules/**/*', name: 'node_modules'
+        }
+
+        stage('sonarQube scanner') {
+          unstash 'source'
+          unstash 'node_modules'
+          echo "sonarQube scanner..."
+          sh "sonar-scanner -Dsonar.projectKey=spectool -Dsonar.sources=. -Dsonar.host.url=http://lama0:9000 -Dsonar.login=0fe7fb26d11ac2247bd6a6dcee57a2db3f4287d8 -Dsonar.sources=src -Dsonar.exclusions='node_modules/**/*, dist/**/*, samples/**/*'"
+        }
+
+        stage('build') {
+          unstash 'source'
+          unstash 'node_modules'
+
+          dir('dist') {
+            deleteDir()
+          }
+
+          script {
+            if("${params.ENV}"=='PROD') {
+              sh "npm run build:prod"
+            } else {
+              sh "npm run build"
+            }
+          }
+          stash includes: 'dist/**/*', name: 'binary'
+        }
+
+        stage('deploying') {
+          unstash 'binary'
+
+          script {
+            if ("${params.ENV}"=='UAT') {
+              tempPlaybookFile = "playbook.yml"
+              tempInventoryFile = "hosts"
+              tempCredFile = "windows.yml"
+              remote_dir="C:\\Tomcat8\\webapps\\spectool\\imexapp"
+
+              // Preparation
+              echo "Preparing deployment for ${params.ENV}"
+              writeFile encoding: 'utf8', file: "${tempInventoryFile}", text: """[windows]
+${params.SERVER}"""
+              dir('group_vars') {
+                writeFile encoding: 'utf8', file: "${tempCredFile}", text: """---
+ansible_user: fwuser@ILNTSUR.LOC
+ansible_password: aureunp
+ansible_port: 5986
+ansible_connection: winrm
+ansible_winrm_transport: ntlm
+ansible_winrm_server_cert_validation: ignore"""
+              }
+              writeFile encoding: 'utf8', file: "${tempPlaybookFile}", text: """---
+- name: 'sync files'
+  hosts: windows
+  vars:
+    - src: 'dist/'
+    - dst: "{{ dest }}"
+  tasks :
+  - name: Remove directory structure
+    win_file:
+      path: "{{ dst }}"
+      state: absent
+
+  - name: Create directory structure
+    win_file:
+      path: "{{ dst }}"
+      state: directory
+
+  - name: Copy folder contents recursively
+    win_copy:
+      src: "{{ src }}"
+      dest: "{{ dst }}"
+      remote_src: false"""
+
+              // run deployment using ansible
+              echo "Deploying to ${params.SERVER} at spectool..."
+              sh "ansible-playbook -i ${tempInventoryFile} ${tempPlaybookFile} --extra-var \"dest=${remote_dir}\""
+
+              //Cleanup
+              echo "Cleanup..."
+              dir('group_vars') {
+                deleteDir()
+              }
+              sh "rm ${tempPlaybookFile} -f"
+              sh "rm ${tempInventoryFile} -f"
+
+              echo "Done"
+            } else {
+              echo "Deploying to ${params.SERVER} at spectool..."
+              sh "rsync -avzhe ssh --delete dist/* tomcat@imex-designer:/opt/tomcat/webapps/spectool/imexapp/"
+            }
+          }
+        }
+      }
+    }
+  }
+  catch (err) {
+    wrap([$class: 'BuildUser']) {
+      currentBuild.result = "FAILURE"
+
+      mail body: "${env.DEFAULT_CONTENT}",
+        from: "${env.DEFAULT_REPLYTO}",
+        replyTo: "${env.DEFAULT_REPLYTO}",
+        subject: "${env.DEFAULT_SUBJECT}",
+        to: "${env.BUILD_USER_EMAIL}"
+
+      throw err
+    }
+  }
+}
