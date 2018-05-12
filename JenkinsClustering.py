@@ -17,7 +17,7 @@ class JenkinsClustering:
     '''
     def get_data_for_jenkinsfile(self,jenkinsfile):
         try:
-
+            
             extract = EntityExtractor()
             consolidated_text = ''
             
@@ -47,7 +47,7 @@ class JenkinsClustering:
     
     def prepare_data_for_clustering(self):
         try:
-            # os.chdir('./Jenkinsfiles/')
+            os.chdir('./Jenkinsfiles/')
             jenkinsfiles = os.listdir()
 
             # Create a dataftame for the data.

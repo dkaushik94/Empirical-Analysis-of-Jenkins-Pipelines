@@ -113,7 +113,9 @@ class Statistics:
             # If Yes, then increment frequency.Regex used here to capture any occurrence rather than string comparison.
             for item in list(files):
                 try:
-                    consolidated = reduce(lambda x, y: x+' '+y, list(shlex(open(item))))
+                    f = open(item)
+                    consolidated = reduce(lambda x, y: x+' '+y, list(shlex(f)))
+                    f.close()
                     for it in list(build_tools.keys()):
                         #Regex which accepts form of [anything except letters]build_tool_name[space].
                         result = re.findall(r'[^a-zA-Z]+%s\s'%(it), consolidated)
@@ -207,13 +209,14 @@ class Statistics:
             # Regex removes bad characters like \uXXXX.
             consolidated_text = re.sub(r"[\\]u[0-9]+", "", consolidated_text)
             # Write to a graphic file, worlcloud.
+            os.chdir('../')
             self.create_word_cloud(
                 consolidated_text, 
                 "'Stage' arguments/processes", 
-                file_path = '/Users/debojitkaushik/ATSE/sandeep_joshi__debojit_kaushik_course_project/stage_word_cloud.png')
+                file_path = './stage_word_cloud.png')
             log.info("Created graphic file in project root directory")
 
-            os.chdir('../')
+            
             log.info("Change to direcotry %s" %(os.getcwd()))
         except Exception:
             log.info(traceback.format_exc())
@@ -262,15 +265,15 @@ class Statistics:
             consolidated_text = text_to_word_sequence(consolidated_text)
             consolidated_text = ' '.join(consolidated_text).replace("'", "").replace('"', '')
             consolidated_text = re.sub(r'[0-9.]+', '', consolidated_text)
-            
+            os.chdir('../')
             #Create world cloud graphics for this.
             self.create_word_cloud(
                 consolidated_text, 
                 "Common processes carried out in 'Stages'", 
-                file_path = '/Users/debojitkaushik/ATSE/sandeep_joshi__debojit_kaushik_course_project/stage_word_cloud_low_level.png')
+                file_path = './stage_word_cloud_low_level.png')
             
             log.info("Created graphic file in project root directory")
-            os.chdir('../')
+            
             log.info("Change to direcotry %s" %(os.getcwd()))
         except Exception:
             log.info(traceback.format_exc())
@@ -337,8 +340,9 @@ class Statistics:
         '''
         try:
             try:
-                data = list(shlex(open(filepath)))
-                elem = open(filepath).readlines()
+                f = open(filepath)
+                elem = f.readlines()
+                f.close()
                 log.info('Obtained lexer output for the file: ' + filepath)
             except:
                 log.info('Unable to get lexer output for the file: ' + filepath)
@@ -382,7 +386,9 @@ class Statistics:
             no_stages_for_files_without_parallel = 0
             i = 0
             for jenkinsfile in filenames:
-                elem = open(jenkinsfile).readlines()
+                f = open(jenkinsfile)
+                elem = f.readlines()
+                f.close()
                 text = ''
                 # Cumulatively add the number of stages for all the files
                 normal_no_stages = normal_no_stages + len(list(self.get_stage_data(jenkinsfile).keys()))
