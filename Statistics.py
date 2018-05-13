@@ -542,23 +542,3 @@ class Statistics:
         except Exception:
             log.info(traceback.format_exc())
             
-
-
-# if __name__ == '__main__':
-#     try:
-#         s = Statistics()
-#         path = "./Jenkinsfiles/"
-#         s.get_timeout_stats(path)
-#         s.build_tool_stats(path)
-#         s.build_word_cloud_high_level(path)
-#         s.build_word_cloud_low_level(path)
-#         s.get_trigger_statistics()
-#         s.consolidate_post_block_statistics()
-#         s.get_post_block_correlation_statistics()
-#         s.get_parallel_block_statistics()
-#         with open('results.json','w',encoding='utf8') as f:
-#             f.write(json.dumps(s.statistics_dict, ensure_ascii=False))
-        
-        
-#     except Exception:
-#         print(traceback.format_exc())

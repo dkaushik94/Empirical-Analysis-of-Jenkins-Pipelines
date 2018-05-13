@@ -1,3 +1,8 @@
+import re
+import os
+import collections
+import traceback
+
 from StageExtractor import EntityExtractor
 from keras.preprocessing.text import text_to_word_sequence
 from shlex import shlex
@@ -6,10 +11,6 @@ from cluster import ClusterAnalysis
 from sklearn.cluster import KMeans
 import pandas as pd
 from Statistics import Statistics
-import collections
-
-import re
-import os
 
 class JenkinsClustering:
     '''
@@ -65,8 +66,6 @@ class JenkinsClustering:
             df['text'] = data
             df['file'] = files
             
-            # print(df)
-            # print(len(data))
             
             # Create a TF - IDF matrix for the data
             vectorizer = TfidfVectorizer(max_df=1.0, min_df=1,norm = None)
@@ -78,21 +77,4 @@ class JenkinsClustering:
             print('Unable to prepare the data for clustering')
             return None, None
 
-
-
-# j = JenkinsClustering()
-
-# data, df = j.prepare_data_for_clustering()
-# estimator = KMeans(n_clusters=30, init = 'k-means++', max_iter = 1000)
-# estimator.fit(data)
-# print(estimator.labels_)
-
-# df['labels'] = estimator.labels_
-
-# for item in set(estimator.labels_):
-#     con_string = ''
-#     for i in range(len(df)):
-#         if df['labels'][i] == item:
-#             con_string += df['text'][i]
-#     Statistics.create_word_cloud(con_string, "Cluster %s" %(item), '/Users/sandeepjoshi/Documents/CS540/Course_Project/sandeep_joshi__debojit_kaushik_course_project/cluster_%s.png' %(item))
     

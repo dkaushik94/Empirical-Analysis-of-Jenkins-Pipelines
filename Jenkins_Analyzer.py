@@ -1,11 +1,12 @@
-from JenkinsClustering import JenkinsClustering
-from sklearn.cluster import KMeans
-from Statistics import Statistics
 import json
 import traceback
 import logging
 import os
 import collections
+
+from JenkinsClustering import JenkinsClustering
+from sklearn.cluster import KMeans
+from Statistics import Statistics
 
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
 logging.basicConfig(filename = "info.log",
@@ -26,6 +27,7 @@ def do_clustering():
         print(collections.Counter(estimator.labels_))
         df['labels'] = estimator.labels_
         os.chdir('../')
+        # Gather data for a particular cluster and build a word cloud
         for item in set(estimator.labels_):
             con_string = ''
             for i in range(len(df)):
@@ -41,6 +43,7 @@ def do_clustering():
 
 def get_statistics():
     try:
+        # Call all the analytic functions from Statistics.py
         s = Statistics()
         path = "./Jenkinsfiles/"
         s.get_timeout_stats(path)
@@ -52,6 +55,7 @@ def get_statistics():
         s.get_post_block_correlation_statistics()
         s.get_parallel_block_statistics()
         
+        # Save the results to results.json
         with open('results.json','w',encoding='utf8') as f:
             f.write(json.dumps(s.statistics_dict, indent=4))
     except Exception:
