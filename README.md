@@ -8,6 +8,7 @@ To run the project make sure you have all the libraries nad dependencies. To do 
 `pip3 install -r Requirements.txt`.
 
 This will install all required libraries. 
+
 * PyGal
 * Plotly
 * Keras
@@ -18,6 +19,7 @@ This will install all required libraries.
 * Seaborn
 
 Run `python3 Jenkins_analyzer.py` to initiae the script and it will run the complete analysis and generate the following files in the root directory.
+
 * build_tools.svg
 * stages_word_cloud.png
 * stages_word_cloud_low_level.png
@@ -40,6 +42,7 @@ We already have jenkinsfiles in the repository. We have fetched it using the scr
 
 ## References:
 Some of the libraries and references with want to mention:
+
 * PyGal
 * Plotly
 * Keras
