@@ -1,17 +1,17 @@
 # Empirical Analysis of Jenkins Pipelines
 
-The primary aim of this project is to discover patterns and trends in various repositories and their continuous integration pipelines. We saw that the settings for different repositories and their intrinsic properties are related to their corresponding continuous integration pipeline settings. The scope of the project itself is huge due to the various types of co*routines and tasks available to be performed in automated testing processes. We analyzed groovy syntax and extracted stages, shell script commands, build invocations using different build tools used.
+The primary aim of this project is to discover patterns and trends in various repositories and their continuous integration pipelines. We saw that the settings for different repositories and their intrinsic properties are related to their corresponding continuous integration pipeline settings. The scope of the project itself is huge due to the various types of co-routines and tasks available to be performed in automated testing processes. We analyzed groovy syntax and extracted stages, shell script commands, build invocations using different build tools used.
 
 # Run this project
 
 To run the project make sure you have all the libraries nad dependencies. To do this run 
-`pip3 install *r Requirements.txt`.
+`pip3 install -r Requirements.txt`.
 
 This will install all required libraries. 
 * PyGal
 * Plotly
 * Keras
-* scikit*learn
+* scikit-learn
 * wordcloud
 * NumPy
 * Pandas
@@ -46,7 +46,7 @@ Some of the libraries and references with want to mention:
 * Numpy
 * Pandas
 * Seaborn
-* scikit*learn
+* scikit-learn
 * [Jenkins Documentation](https://jenkins.io/doc/book/pipeline/syntax/)
 * www.python.org 
 * wordcloud (Python Library) 
