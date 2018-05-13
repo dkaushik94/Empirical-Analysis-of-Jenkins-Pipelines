@@ -6,6 +6,7 @@ from cluster import ClusterAnalysis
 from sklearn.cluster import KMeans
 import pandas as pd
 from Statistics import Statistics
+import collections
 
 import re
 import os

@@ -5,6 +5,7 @@ import json
 import traceback
 import logging
 import os
+import collections
 
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
 logging.basicConfig(filename = "info.log",
@@ -22,7 +23,7 @@ def do_clustering():
         estimator = KMeans(n_clusters=30, init = 'k-means++', max_iter = 1000)
         estimator.fit(data)
         print(estimator.labels_)
-
+        print(collections.Counter(estimator.labels_))
         df['labels'] = estimator.labels_
         os.chdir('../')
         for item in set(estimator.labels_):

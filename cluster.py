@@ -8,6 +8,7 @@ import time
 from functools import reduce
 from collections import Counter
 import json
+import logging
 
 import pygal
 import pandas as pd
@@ -18,6 +19,14 @@ from sklearn.decomposition import PCA
 from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
+
+#Logging setup
+LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+logging.basicConfig(filename = "info.log",
+    level=os.environ.get("LOGLEVEL", "INFO"),
+    format = LOG_FORMAT,
+    filemode = 'w')
+log = logging.getLogger(__name__)
 
 
 class ClusterAnalysis:
